@@ -1,5 +1,5 @@
 const sequelize=require("./database")
-sequelize.sync({force:true}).then(()=>console.log("db is ready"))
+sequelize.sync({}).then(()=>console.log("db is ready"))
 
 
 const express = require('express');
@@ -9,6 +9,7 @@ const path = require('path');
 //const Products=require("./models/products");
 const Product = require("./models/products");
 const CartItem = require("./models/cart");
+const User = require("./models/user");
 
 
 const app = express();
@@ -27,19 +28,48 @@ CartItem.hasMany(Product,{
 Product.belongsTo(CartItem,{
 })
 
+User.hasMany(CartItem)
+CartItem.belongsTo(User)
+
+
+//api for user SignUp
+app.post('/signup',(req,res)=>{
+  User.create(req.body).then((response)=>res.send(response)).catch(err=>console.log("err: ",err))
+})
+//api for signin
+app.post('/signin',(req,res)=>{
+  console.log(req.body)
+User.findOne({ where: { userId: req.body.userId }}).then((user)=>{
+  console.log(user)
+  if(user===null)
+  res.send("signup first!!")
+  else if( (user.password===req.body.password))
+  res.send("signIn successfully")
+ 
+}
+).catch(err=>console.log("something wrong !!"))
+}
+)
+
 
 
 
 app.post('/addproduct',async(req,res)=>{
  
-  if(req.body.id!==null)
-    Product.create((req.body)).then(product=>res.send(product)).catch(err=>console.log(err));
+  // if(req.body.id!==null)
+    console.log((req.body))
+    Product.create(req.body).then(product=>res.send(product)).catch(err=>console.log(err));
    
  }
  )
  app.get('/allcartitems',(req,res)=>{
-   CartItem.findAll().then(products=>res.send(products)).catch(err=>res.send(`error occured : ${err.message}`));
+   console.log("api hit ")
+   CartItem.findAll({include :[Product]}).then(products=>res.send(products)).catch(err=>res.send(`error occured : ${err.message}`));
  })
+//  app.get('/allcartitems',(req,res)=>{
+//   console.log("api hit ")
+//   User.findAll({include :[CartItem]}).then(products=>res.send(products)).catch(err=>res.send(`error occured : ${err.message}`));
+// })
 
  app.post('/addtocart',(req,res)=>{
     console.log(req.body);
@@ -56,7 +86,7 @@ app.post('/addproduct',async(req,res)=>{
  }
  )
  app.get('/allproduct',(req,res)=>{
-   Product.findAll().then(products=>res.send(products)).catch(err=>res.send(`error occured : ${err.message}`));
+   Product.findAll().then(products=>res.send(JSON.stringify(products))).catch(err=>res.send(`error occured : ${err.message}`));
  })
  app.delete('/deletecartitem',(req,res)=>{
   CartItem.destroy({
@@ -75,11 +105,19 @@ app.post('/addproduct',async(req,res)=>{
 
 app.delete('/deletecarts',(req,res)=>{
   console.log("yyaa")
+//   CartItem.findAll({where:{}}).then((cartIds)=>{
+//     if (cartIds.length === 0) 
+//     return Promise.resolve(true) //nothing to delete
+//  return CartItem.destroy({where: {id: {$in: cartIds}}});
+//   })})
   CartItem.destroy({
-    where:{},
-    truncate:false
+    truncate:true,
+    cascade:true,
+    force:true
+    
    
-  }).then(()=>res.send()).catch(err=>console.log(err))
+   
+  }).then(()=>res.send("deleted")).catch(err=>console.log(err))
  
 })
 
