@@ -34,17 +34,18 @@ CartItem.belongsTo(User)
 
 //api for user SignUp
 app.post('/signup',(req,res)=>{
+  console.log(req.body)
   User.create(req.body).then((response)=>res.send(response)).catch(err=>console.log("err: ",err))
 })
 //api for signin
 app.post('/signin',(req,res)=>{
   console.log(req.body)
-User.findOne({ where: { userId: req.body.userId }}).then((user)=>{
+User.findOne({ where: { username: req.body.username }}).then((user)=>{
   console.log(user)
   if(user===null)
   res.send("signup first!!")
   else if( (user.password===req.body.password))
-  res.send("signIn successfully")
+  res.send(user)
  
 }
 ).catch(err=>console.log("something wrong !!"))
@@ -72,12 +73,18 @@ app.post('/addproduct',async(req,res)=>{
 // })
 
  app.post('/addtocart',(req,res)=>{
-    console.log(req.body);
+    console.log(req.body[0]);
 
-    CartItem.create(({})).then(cart=>{
-      req.body.map(product=>Product.create({title:product.title,cartId:cart.id,
-      name:product.name,
-    description:product.description}))
+    CartItem.create(({userId:req.body[0]})).then(cart=>{
+      console.log(cart.id)
+      req.body[1].map(product=>{
+        console.log(product)
+        Product.create({title:product.title,cartId:cart.id,
+          name:product.name,
+        description:product.description})
+      }
+        
+       )
 
 
       res.send(cart)}

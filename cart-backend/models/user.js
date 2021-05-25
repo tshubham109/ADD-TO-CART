@@ -3,7 +3,7 @@ const db=require('../database');
 
 const User=db.define('user',{
 
-    userId:{
+    username:{
         type: Sequelize.STRING,
      }
      ,
